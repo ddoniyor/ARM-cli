@@ -1,4 +1,4 @@
-module ARM-cli
+module github.com/ddoniyor/ARM-cli
 
 go 1.13
 
