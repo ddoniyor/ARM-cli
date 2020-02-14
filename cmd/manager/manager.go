@@ -3,18 +3,39 @@ package main
 import (
 	"bufio"
 	"database/sql"
+	"encoding/json"
 	"fmt"
-
+	"github.com/ddoniyor/ARM-core/pkg/core"
+	_ "github.com/mattn/go-sqlite3"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 )
 
+type Clients struct {
+	Id       int
+	Name     string
+	Login    string
+	Password string
+	PhoneNum int
+}
 
+type Atm struct {
+	Id     int
+	Name   string
+	Adress string
+}
 
+type Accounts struct {
+	Id        int
+	Name      string
+	Balance   int
+	Client_id int
+}
 
 func main() {
-	// os.Stdin, os.Stout, os.Stderr, File
+
 	file, err := os.OpenFile("log.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatal(err)
@@ -36,15 +57,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("can't init db: %v", err)
 	}
-
 	fmt.Fprintln(os.Stdout, "Добро пожаловать в наше приложение")
 	log.Print("start operations loop")
 	operationsLoop(db, unauthorizedOperations, unauthorizedOperationsLoop)
 	log.Print("finish operations loop")
 	log.Print("finish application")
+
+	jsonFormatClients(db)
+	jsonFormatAtms(db)
+	jsonFormatAccounts(db)
+
 }
-
-
 
 func operationsLoop(db *sql.DB, commands string, loop func(db *sql.DB, cmd string) bool) {
 	for {
@@ -70,8 +93,7 @@ func unauthorizedOperationsLoop(db *sql.DB, cmd string) (exit bool) {
 		}
 		if !ok {
 			fmt.Println("Неправильно введён логин или пароль. Попробуйте ещё раз.")
-			//unauthorizedOperationsLoop(db, "1")
-			//Graceful shutdown
+
 			return false
 		}
 		operationsLoop(db, authorizedOperations, authorizedOperationsLoop)
@@ -110,7 +132,6 @@ func authorizedOperationsLoop(db *sql.DB, cmd string) (exit bool) {
 			log.Printf("can't add service: %v", err)
 			return true
 		}
-
 
 	case "q":
 		return true
@@ -201,8 +222,7 @@ func handleClients(db *sql.DB) (err error) {
 		return err
 	}
 
-
-	err = core.AddClients(name, log, password,phone ,db)
+	err = core.AddClients(name, log, password, phone, db)
 	if err != nil {
 		return err
 	}
@@ -263,5 +283,127 @@ func handleAccount(db *sql.DB) (err error) {
 	fmt.Println("Счёт успешно добавлен!")
 
 	return nil
+}
+
+//JSON FORMAT
+
+func jsonFormatClients(db *sql.DB) {
+	client := []Clients{{4, "Amir", "amir", "amir", 902222201},
+		{5, "Lola", "lola", "lola", 9022002020},
+	}
+	data, err := json.Marshal(client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = ioutil.WriteFile("Clients.json", data, 0666, )
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bytes, err := ioutil.ReadFile("Clients.json")
+	if err != nil {
+		log.Fatal(bytes)
+	}
+	err = json.Unmarshal(data, &client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, clients := range client {
+		_, err = db.Exec(`INSERT INTO clients VALUES (:id, :name, :login, :password, :phoneNum) ON CONFLICT DO NOTHING `,
+			sql.Named("id", clients.Id),
+			sql.Named("name", clients.Name),
+			sql.Named("login", clients.Login),
+			sql.Named("password", clients.Password),
+			sql.Named("phoneNum", clients.PhoneNum),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+}
+
+func jsonFormatAtms(db *sql.DB) {
+	atm := []Atm{
+		{5, "T5", "Ayni"},
+		{6, "T6", "Shohmansur"},
+	}
+
+	data, err := json.Marshal(atm)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = ioutil.WriteFile("Atms.json", data, 0666, )
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bytes, err := ioutil.ReadFile("Atms.json")
+	if err != nil {
+		log.Fatal(bytes)
+	}
+	err = json.Unmarshal(data, &atm)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, atms := range atm {
+		_, err = db.Exec(`INSERT INTO atm VALUES (:id, :name, :adress) ON CONFLICT DO NOTHING `,
+			sql.Named("id", atms.Id),
+			sql.Named("name", atms.Name),
+			sql.Named("adress", atms.Adress),
+
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func jsonFormatAccounts(db *sql.DB) {
+	account := []Accounts{
+		{4, "Alif", 2000, 4},
+		{5, "Milli", 3000, 5},
+	}
+
+	/*exec, err := db.Exec(`SELECT name FROM clients `)
+	if err != nil {
+		log.Fatal(err)
+	}*/
+
+	data, err := json.Marshal(account)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = ioutil.WriteFile("Accounts.json", data, 0666, )
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bytes, err := ioutil.ReadFile("Accounts.json")
+	if err != nil {
+		log.Fatal(bytes)
+	}
+	err = json.Unmarshal(data, &account)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, accounts := range account {
+		_, err = db.Exec(`INSERT INTO accounts VALUES (:id, :name, :balance, :client_id) ON CONFLICT DO NOTHING `,
+			sql.Named("id", accounts.Id),
+			sql.Named("name", accounts.Name),
+			sql.Named("balance", accounts.Balance),
+			sql.Named("client_id", accounts.Client_id),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 }
 

@@ -3,27 +3,12 @@ package main
 import (
 	"database/sql"
 	"fmt"
-
-	"io"
+	"github.com/ddoniyor/ARM-core/pkg/core"
+	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
 	"strings"
 )
-
-
-
-// TODO: для тех, кто хочет попробовать, можете использовать структуры и методы:
-type manager struct {
-	db  *sql.DB
-	out io.Writer
-	in  io.Reader
-}
-
-func newManagerCLI(db *sql.DB, out io.Writer, in io.Reader) *manager {
-	return &manager{db: db, out: out, in: in}
-}
-
-// Writer, Reader
 
 
 func main() {
@@ -56,7 +41,6 @@ func main() {
 	log.Print("finish operations loop")
 	log.Print("finish application")
 }
-
 
 func operationsLoop(db *sql.DB, commands string, loop func(db *sql.DB, cmd string) bool) {
 	for {
@@ -145,7 +129,6 @@ func authorizedOperationsLoop(db *sql.DB, cmd string) (exit bool) {
 	return false
 }
 
-
 //PRINTS STUFFS
 func printAtm(atms []core.Atm) {
 	for _, atm := range atms {
@@ -181,8 +164,6 @@ func printServices(services []core.Service) {
 	}
 }
 
-
-
 //HANDLE STUFFS
 func handleLogin(db *sql.DB) (ok bool, err error) {
 	fmt.Println("Введите ваш логин и пароль")
@@ -200,8 +181,7 @@ func handleLogin(db *sql.DB) (ok bool, err error) {
 		return false, err
 	}
 
-
-	ok, err = core.LoginClient(login, password,db)
+	ok, err = core.LoginClient(login, password, db)
 	if err != nil {
 		return false, err
 	}
@@ -209,24 +189,24 @@ func handleLogin(db *sql.DB) (ok bool, err error) {
 	return ok, err
 }
 
-func handleServiceTransaction(db *sql.DB)( err error) {
+func handleServiceTransaction(db *sql.DB) (err error) {
 	var sum int
 	fmt.Println("Введите сумму перевода: ")
 	_, err = fmt.Scan(&sum)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	var idService int
 	fmt.Println("Введите id сервиса: ")
 	_, err = fmt.Scan(&idService)
 	if err != nil {
-		return  err
+		return err
 	}
 
-	err =core.TransferMoneyToService(sum,idService, db)
+	err = core.TransferMoneyToService(sum, idService, db)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	fmt.Println("Транзакция успешно выполнена!")
@@ -234,24 +214,24 @@ func handleServiceTransaction(db *sql.DB)( err error) {
 
 }
 
-func handlePhoneNumberTransaction(db *sql.DB)( err error) {
+func handlePhoneNumberTransaction(db *sql.DB) (err error) {
 	var sum int
 	fmt.Println("Введите сумму перевода: ")
 	_, err = fmt.Scan(&sum)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	var phoneNum int
 	fmt.Println("Введите номер клиента: ")
 	_, err = fmt.Scan(&phoneNum)
 	if err != nil {
-		return  err
+		return err
 	}
 
-	err =core.TransferMoneyWithPhoneNumber(sum,phoneNum, db)
+	err = core.TransferMoneyWithPhoneNumber(sum, phoneNum, db)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	fmt.Println("Транзакция успешно выполнена!")
@@ -259,24 +239,24 @@ func handlePhoneNumberTransaction(db *sql.DB)( err error) {
 
 }
 
-func handleAccountsIdTransaction(db *sql.DB)( err error) {
+func handleAccountsIdTransaction(db *sql.DB) (err error) {
 	var sum int
 	fmt.Println("Введите сумму перевода: ")
 	_, err = fmt.Scan(&sum)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	var idAccount int
 	fmt.Println("Введите id счета: ")
 	_, err = fmt.Scan(&idAccount)
 	if err != nil {
-		return  err
+		return err
 	}
 
-	err =core.TransferMoneyWithAccountId(sum,idAccount, db)
+	err = core.TransferMoneyWithAccountId(sum, idAccount, db)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	fmt.Println("Транзакция успешно выполнена!")
